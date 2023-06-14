@@ -56,33 +56,38 @@ class FiniteDimVectorSpace(VectorSpace):
     def get_std_basis(self):
         pass
 
-    def check_member(self, aug_vecs: np.array) -> bool:
-        ''' aug_vecs: An augmented matrix created from
-        vectors needing to check members in form:
-        aug_vecs = [b1 |b2 |b3 ...] (where b1, b2, b3 are 
-        1x n vectors). Faster computation. 
+    def check_member(self, aug_vecs: list) -> bool:
+        ''' aug_vecs: List of all vectors
         Return True if all aug_vec is element '''
         try:
             self.get_coordinates(aug_vecs)
             return True
-        except ValueError:
+        except ValueError as e:
+            print(e)
             return False
 
     @abstractmethod
-    def get_coordinates(self, aug_vecs) -> np.array:
+    def get_coordinates(self, aug_vecs: list) -> np.array:
         ''' Get coordinates from the finite basis
-        aug_vecs: A set of elements, or an np.array matrix
-        if each element is a column matrix.
+        aug_vecs: A list of vectors.
         Return the np.array matrix with each column
         = coordinates of each element.
         '''
         pass
 
+    def from_coordinates_std(self, coord: np.array):
+        ''' coord: A column n x 1 vectors'''
+        std_basis = self.get_std_basis()
+        dim = len(std_basis)
+        vec = self.scalar_mult(coord[0][0], std_basis[0])
+        for i in range(1, dim):
+            vec = self.vec_add(self.scalar_mult(coord[i][0], std_basis[i]), vec)
+        return vec
 
     
     def check_linear_independent(self, test_set: list) -> bool:
         ''' Check FINITE test_set on FINITE-dimensional vectorspace
-        Note: test_set is a list with unique np.array n x 1 vector'''
+        Note: test_set is a list with unique np.array 1 x n vector'''
 
         std_basis = self.get_std_basis()
 
@@ -92,7 +97,7 @@ class FiniteDimVectorSpace(VectorSpace):
             return False
         
         # 2. Check if rank(aug_matrix) < len(test_set)
-        aug_matrix = self.get_coordinates(np.concatenate(test_set, axis=1))
+        aug_matrix = self.get_coordinates(test_set)
         rank = Matrix(aug_matrix, self.field).rank()
         if rank < len(test_set):
             return False
@@ -119,36 +124,48 @@ class FiniteDimVectorSpace(VectorSpace):
         return True
     
     def extended_basis(self, lin_ind_set: list, 
-                       sub_space_basis: np.array = None) -> np.array:
+                       sub_space_basis: list = None) -> list:
         ''' Extend a linearly independent set to become a basis
-        lin_ind_set: list of n x 1 np.array vectors;
-        sub_space_basis: 2D np.array with each basis element as a row;
+        of a subspace
+
+        lin_ind_set: list of vectors;
+        sub_space_basis: list of each basis element;
+        Vectors represented as column matrix (if possible)
+
         If no subspace basis specified, then current vectorspace
         standard basis is used.'''
-          
-        if sub_space_basis == None:
-            sub_space_basis = np.transpose(self.get_std_basis())
-        else:
-            sub_space_basis = np.transpose(sub_space_basis)
         
-        lin_ind_aug = np.concatenate(lin_ind_set, axis=1)
-        aug_matrix = np.concatenate((lin_ind_aug, sub_space_basis), axis=1)
+        if sub_space_basis == None:
+            sub_space_basis = self.get_std_basis()
+            sub_space_coord = np.identity(len(sub_space_basis))
+        else:
+            sub_space_coord = self.get_coordinates(sub_space_basis)
+        
+        
+        lin_ind_coord = self.get_coordinates(lin_ind_set)
+        aug_matrix = np.concatenate((lin_ind_coord, sub_space_coord), axis=1)
 
-        aug_obj = ColSpace(self.field, aug_matrix)
-        return aug_obj.get_std_basis()
+        aug_obj = Matrix(aug_matrix, self.field)
+        leading_post = aug_obj.leading_entry_position()
+        chosen_sub_basis = [sub_space_basis[post[1] - len(lin_ind_set)] 
+                            for post in leading_post if post[1] >= len(lin_ind_set)]
+        return lin_ind_set + chosen_sub_basis
 
     
-    def basis_from_spanning(self, span_set: list) -> np.array:
+    def basis_from_spanning(self, span_set: list) -> list:
         ''' Extract the basis from spanning set.
         span_set: List  of n x 1 np.array vectors.
         Make sure span_set is a spanning set using check.'''
 
-        span_set_aug = np.concatenate(span_set, axis=1)
-        aug_obj = ColSpace(self.field, span_set_aug)
-        return aug_obj.get_std_basis()
+        span_set_coord = self.get_coordinates(span_set)
+        aug_obj = Matrix(span_set_coord, self.field)
+        leading_posts = aug_obj.leading_entry_position()
+        return [span_set[post[1]] for post in leading_posts]
 
 
 # Vector spaces associated with a matrix
+# For theses vector spaces, each vector is a 1 x n np.array vector 
+# represented as 2D array: e.g: [[1, 2, 3]], not [1, 2, 3].
 class RowSpace(FiniteDimVectorSpace):
     def __init__(self, field: Field, matrix_2d: list):
         super().__init__(field)
@@ -165,13 +182,10 @@ class RowSpace(FiniteDimVectorSpace):
                 result.append(row)
         self.std_basis = np.array(result)
 
-    def get_coordinates(self, aug_vecs: np.array) -> np.array:
-        ''' aug_vecs: An augmented matrix created from
-        vectors needing to find coordinates in form:
-        aug_vecs = [b1 |b2 |b3 ...] (where b1, b2, b3 are 
-        1x n vectors)
-        Faster computation. '''
+    def get_coordinates(self, aug_vecs: list) -> np.array:
+        ''' aug_vecs: List of column 1 x n vectors for this subspace'''
 
+        aug_vecs = np.transpose(np.concatenate(aug_vecs, axis=0))
         std_basis = self.std_basis
         aug_matrix = np.concatenate((np.transpose(std_basis), aug_vecs), axis=1)
         aug_obj = Matrix(aug_matrix, self.field)
@@ -260,7 +274,16 @@ class SolutionSpace(RowSpace):
 
 
 # Testing
+
 # real = RealField()
 # f5 = PrimeField(5)
 # sol_space = SolutionSpace(real, [[1, 2, 3], [0, 0, 3]])
+# row_space = RowSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])
+# col_space = ColSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])
+
+# print(row_space.extended_basis([np.array([[0, 0, 3]]), np.array([[1, 2, 3]])]))
+# print(row_space.basis_from_spanning([np.array([[0, 0, 3]]), 
+#                                      np.array([[1, 2, 3]]), 
+#                                      np.array([[0, 2, 3]]),
+#                                      np.array([[-1, -2, -3]])]))
 # print(sol_space.get_std_basis())

@@ -80,11 +80,13 @@ class LinearCode(SolutionSpace):
         _, num_col = self.matrix.shape
         for i in range(num_col):
             col_set.add(tuple(self.matrix[:, i]))
+
+
         col_space_obj = ColSpace(self.field, self.matrix)
         for i in range(1, len(col_set) + 1):
             curr_comb = combinations(col_set, i)
             for curr_set in curr_comb:
-                check = [np.array(temp).reshape(-1, 1) for temp in curr_set]
+                check = [np.array(temp).reshape(1, -1) for temp in curr_set]
                 if not col_space_obj.check_linear_independent(check):
                     self.min_distance = len(curr_set)
                     return len(curr_set)
