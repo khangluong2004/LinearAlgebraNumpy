@@ -88,12 +88,47 @@ class RotationR2(LinearTransformationR2):
             return np.array([[math.cos(self.degree), math.sin(self.degree)]])
         return np.array([[-math.sin(self.degree), math.cos(self.degree)]])
 
+class StretchR2(LinearTransformationR2):
+    ''' Stretch along x or y-axis'''
+    def __init__(self, field: Field, scale: float, x_axis: bool):
+        super().__init__(field)
+        self.x_axis = x_axis
+        self.scale = scale
+    
+    def func_basis(self, a):
+        ''' a: 1x2 np.array vector'''
+        if self.x_axis:
+            return np.array([[self.field.mult(self.scale, a[0][0]), a[0][1]]])
+        else:
+            return np.array([[a[0][0], self.field.mult(self.scale, a[0][1])]])
+
+class ShearR2(LinearTransformationR2):
+    ''' Shear along x or y-axis'''
+    def __init__(self, field: Field, scale: float, x_axis: bool):
+        ''' x_axis: Shear along x or not'''
+        super().__init__(field)
+        self.x_axis = x_axis
+        self.scale = scale
+    
+    def func_basis(self, a):
+        ''' a: 1x2 np.array vector'''
+        if self.x_axis:
+            return np.array([[self.field.add(a[0][0], self.field.mult(self.scale, a[0][1])), a[0][1]]])
+        else:
+            return np.array([[a[0][0], self.field.add(a[0][1], self.field.mult(self.scale, a[0][0]))]]) 
+
+
+
+
 # Testing
 # real = RealField()
 # reflection = ReflectionR2(real)
-# rotation = RotationR2(real)
+# rotation = RotationR2(real, math.pi/2)
+# stretch = StretchR2(real, 2, True)
+# shear = ShearR2(real, 2, True)
 
 # print(reflection.func(np.array([[1, 2]])))
+# print(rotation.matrix_form())
             
         
 
