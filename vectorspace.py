@@ -48,6 +48,7 @@ class VectorSpace(ABC):
                     return False
         
         return True
+
     
 class FiniteDimVectorSpace(VectorSpace):
     ''' Abstract class for finitely-dimensional vectorspace'''
@@ -126,7 +127,7 @@ class FiniteDimVectorSpace(VectorSpace):
     def extended_basis(self, lin_ind_set: list, 
                        sub_space_basis: list = None) -> list:
         ''' Extend a linearly independent set to become a basis
-        of a subspace
+        of a subspace.
 
         lin_ind_set: list of vectors;
         sub_space_basis: list of each basis element;
@@ -162,6 +163,41 @@ class FiniteDimVectorSpace(VectorSpace):
         leading_posts = aug_obj.leading_entry_position()
         return [span_set[post[1]] for post in leading_posts]
 
+# Implementations
+# Vector space R-n
+class R_n(FiniteDimVectorSpace):
+    def __init__(self, field: Field, dim: int):
+        super().__init__(field)
+        self.dim = dim
+        self.std_basis = []
+        for i in range(dim):
+            curr = np.zeros((1, dim))
+            curr[0][i] = 1
+            self.std_basis.append(curr)
+    
+    def check_member(self, aug_vecs: list) -> bool:
+        ''' All vectors must be 1 x n np.array of type real'''
+        for vec in aug_vecs:
+            col, row = vec.shape
+            if col != 1 or row != self.dim:
+                return False
+            for elem in vec[0]:
+                if not self.field.check_member(elem):
+                    return False
+        return True
+    
+    def vec_add(self, a: np.array, b: np.array) -> np.array:
+        ''' a, b: 1 x n np.array vector'''
+        return a + b
+    
+    def scalar_mult(self, a: Field, b: np.array) -> np.array:
+        return a * b
+    
+    def get_std_basis(self):
+        return self.std_basis
+    
+    def get_coordinates(self, aug_vecs: list) -> np.array:
+        return np.transpose(np.concatenate(aug_vecs, axis=0))
 
 # Vector spaces associated with a matrix
 # For theses vector spaces, each vector is a 1 x n np.array vector 
@@ -183,7 +219,9 @@ class RowSpace(FiniteDimVectorSpace):
         self.std_basis = np.array(result)
 
     def get_coordinates(self, aug_vecs: list) -> np.array:
-        ''' aug_vecs: List of column 1 x n vectors for this subspace'''
+        ''' aug_vecs: List of column 1 x n vectors for this subspace.
+        Return the matrix where each column is the corresponding
+        vector coordinates.'''
 
         aug_vecs = np.transpose(np.concatenate(aug_vecs, axis=0))
         std_basis = self.std_basis
@@ -277,11 +315,13 @@ class SolutionSpace(RowSpace):
 
 # real = RealField()
 # f5 = PrimeField(5)
+# R2 = R_n(real, 2)
 # sol_space = SolutionSpace(real, [[1, 2, 3], [0, 0, 3]])
 # row_space = RowSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])
 # col_space = ColSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])
 
-# print(row_space.extended_basis([np.array([[0, 0, 3]]), np.array([[1, 2, 3]])]))
+# print(R2.get_std_basis())
+# print(col_space.extended_basis([np.array([[0, 0, 3]])]))
 # print(row_space.basis_from_spanning([np.array([[0, 0, 3]]), 
 #                                      np.array([[1, 2, 3]]), 
 #                                      np.array([[0, 2, 3]]),

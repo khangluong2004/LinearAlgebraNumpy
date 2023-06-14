@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 
 class Field(ABC):
     @abstractmethod
+    def check_member(self, a):
+        pass
+
+    @abstractmethod
     def add(self, a, b):
         pass
 
@@ -35,6 +39,9 @@ class PrimeField(Field):
                         self.inv[inv] = elem
                         break
     
+    def check_member(self, a):
+        return a in self.elements
+    
     def add(self, a, b):
         return((a + b) % self.prime)
     
@@ -49,6 +56,9 @@ class RealField(Field):
     def __init__(self):
         pass
 
+    def check_member(self, a):
+        return type(a) is int or type(a) is float
+
     def add(self, a, b):
         return a + b
     
@@ -60,7 +70,8 @@ class RealField(Field):
 
 class ComplexField(RealField):
     ''' Same operators as Real'''
-    pass
+    def check_member(self, a):
+        return type(a) is complex
 
 # Testing
 # real = RealField()
