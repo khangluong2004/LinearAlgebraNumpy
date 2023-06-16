@@ -165,7 +165,7 @@ class FiniteDimVectorSpace(VectorSpace):
 
 # Implementations
 # Vector space R-n
-class R_n(FiniteDimVectorSpace):
+class F_n(FiniteDimVectorSpace):
     def __init__(self, field: Field, dim: int):
         super().__init__(field)
         self.dim = dim
@@ -315,7 +315,7 @@ class SolutionSpace(RowSpace):
 
 # real = RealField()
 # f5 = PrimeField(5)
-# R2 = R_n(real, 2)
+# R2 = F_n(real, 2)
 # sol_space = SolutionSpace(real, [[1, 2, 3], [0, 0, 3]])
 # row_space = RowSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])
 # col_space = ColSpace(real, [[1, 2, 3], [0, 2, 3], [0, 0, 3]])

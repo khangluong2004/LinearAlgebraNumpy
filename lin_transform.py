@@ -65,8 +65,8 @@ class FiniteLinearTransform(LinearTransform):
 
 class LinearTransformationR2(FiniteLinearTransform):
     def __init__(self, field: Field):
-        self.domain = R_n(field, 2)
-        self.co_domain = R_n(field, 2)
+        self.domain = F_n(field, 2)
+        self.co_domain = F_n(field, 2)
         self.field = field
 
 class ReflectionR2(LinearTransformationR2):
