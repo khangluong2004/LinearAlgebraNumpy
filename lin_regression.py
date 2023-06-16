@@ -58,7 +58,30 @@ class LinearRegression:
             coeff[leading[1]][0] = last_col[leading[0]]
         return coeff
 
+class LinRegPolynomial(LinearRegression):
+    ''' An extension to adapt to polynomial on R2.
+    input_dim = Degree of polynomial '''
+
+    def best_fit_coeff(self, x_coords: list, y_coords: list):
+        ''' 
+        x_coords: 1 x n list [x1, x2, ...]
+        y_coords: 1 x n list [y1, y2, ...]
+        Must match in dimension
+        '''
+        new_x_coords = [0] * len(x_coords)
+        for i in range(len(x_coords)):
+            curr = [0] * (self.input_dim + 1)
+            for j in range(self.input_dim + 1):
+                curr[j] = x_coords[i] ** j
+            new_x_coords[i] = curr
+        return super().best_fit_coeff(new_x_coords, y_coords)
+
+    
+    
+
 
 # Testing
-lin_reg = LinearRegression(1)
-print(lin_reg.best_fit_coeff([[1, -1], [1, 1], [1, 2], [1, 4]], [1, 1, 3, 5]))
+# lin_reg = LinearRegression(1)
+# poly_reg = LinRegPolynomial(2)
+# print(lin_reg.best_fit_coeff([[1, -1], [1, 1], [1, 2], [1, 4]], [1, 1, 3, 5]))
+# print(poly_reg.best_fit_coeff([-1, 1, 2, 4], [1, 1, 3, 5]))
