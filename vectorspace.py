@@ -164,7 +164,7 @@ class FiniteDimVectorSpace(VectorSpace):
         return [span_set[post[1]] for post in leading_posts]
 
 # Implementations
-# Vector space R-n
+# Vector space F-n
 class F_n(FiniteDimVectorSpace):
     def __init__(self, field: Field, dim: int):
         super().__init__(field)
